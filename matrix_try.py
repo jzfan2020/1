@@ -41,7 +41,7 @@ def read_data():
     return total
     # 找出tag 並與情緒相乘
 def tag_with_emo(total):
-    re_n1 = re.compile("小孩|小朋友|小天使|小寶寶|孩子|懷孕|生產|同住|兒子|女兒|弟弟|妹妹|兒童")
+    re_n1 = re.compile("小孩|小朋友|小天使|小寶寶|孩子|懷孕|生產|同住|兒子|女兒|弟弟|妹妹|兒童|父母|公婆")
     re_pa = re.compile("開車|交通|通勤|停車|車位|機車|汽車|高速公路|機械式|平面坡道|露天|車")
     re_ele = re.compile("老人|父|母|長輩|樓梯|電梯|爸|媽|公公|婆婆|公婆|梯")
     re_mrt = re.compile("捷運|交通|通勤|沿線|車站")
@@ -58,43 +58,43 @@ def tag_with_emo(total):
         if re.search(re_n1, item['content']):
             item['Non_1'] = 1*sc
         else:
-            item['Non_1'] = 0+2
+            item['Non_1'] = 0
         if re.search(re_pa, item['content']):
             item['Parking'] = 1*sc
         else:
-            item['Parking'] = 0+2
+            item['Parking'] = 0
         if re.search(re_ele, item['content']):
             item['Elevator'] = 1*sc
         else:
-            item['Elevator'] = 0+2
+            item['Elevator'] = 0
         if re.search(re_mrt, item['content']):
             item['MRT'] = 1*sc
         else:
-            item['MRT'] = 0+2
+            item['MRT'] = 0
         if re.search(re_bus, item['content']):
             item['Bus'] = 1*sc
         else:
-            item['Bus'] = 0+2
+            item['Bus'] = 0
         if re.search(re_park, item['content']):
             item['Park'] = 1*sc
         else:
-            item['Park'] = 0+2
+            item['Park'] = 0
         if re.search(re_conv_st, item['content']):
             item['Convenience'] = 1*sc
         else:
-            item['Convenience'] = 0+2
+            item['Convenience'] = 0
         if re.search(re_annoy, item['content']):
             item['Noise'] = 1*sc
         else:
-            item['Noise'] = 0+2
+            item['Noise'] = 0
         if re.search(re_police_st, item['content']):
             item['Police_station'] = 1*sc
         else:
-            item['Police_station'] =0+2
+            item['Police_station'] =0
         if re.search(re_manage, item['content']):
             item['Management'] = 1*sc
         else:
-            item['Management'] = 0+2
+            item['Management'] = 0
 
         a = int(item['Non_1']) + int(item['Parking']) + int(item['Elevator'])+ int(item['MRT']) + int(item['Bus']) + int(item['Park'])+int(item['Convenience']) + int(item['Noise'])+ int(item['Police_station'])+int(item['Management'])
         if a <2:
