@@ -43,14 +43,14 @@ def read_data():
 def tag_with_emo(total):
     re_n1 = re.compile("小孩|小朋友|小天使|小寶寶|孩子|懷孕|生產|同住|兒子|女兒|弟弟|妹妹|兒童|父母|公婆")
     re_pa = re.compile("開車|交通|通勤|停車|車位|機車|汽車|高速公路|機械式|平面坡道|露天|車")
-    re_ele = re.compile("老人|父|母|長輩|樓梯|電梯|爸|媽|公公|婆婆|公婆|梯")
+    re_ele = re.compile("老人|父|母|長輩|樓梯|電梯|爸|媽|公公|婆婆|公婆|梯|懷孕")
     re_mrt = re.compile("捷運|交通|通勤|沿線|車站")
     re_bus = re.compile("公車|交通|通勤|老人|父|母|長輩|爸|媽|公公|婆婆|公婆|站牌")
-    re_park = re.compile("公園|綠地|休憩|兒童|綠化|學區")
+    re_park = re.compile("公園|綠地|休憩|兒童|綠化|學區|寵物|狗|毛小孩|毛孩")
     re_conv_st = re.compile("機能|生活|便利|吃|外食|商店|店面|超商|全家|萊爾富|小七|7-11|seven|購物|全聯|愛買|頂好|家樂福|大潤發")
     re_annoy = re.compile("寺廟|吵|鬧|噪音|異味|煙|廟|鞭炮|金紙|燒香|消防隊")
     re_police_st = re.compile("派出所|治安|警察|亂|分隊|分局|混混|大隊")
-    re_manage = re.compile("管委會|垃圾|管理|維護|維修|警衛|保全|乾淨|清潔|整齊|保潔|雜物|社區")
+    re_manage = re.compile("管委會|垃圾|管理|維護|維修|警衛|保全|乾淨|清潔|整齊|保潔|雜物|社區|公設比高")
     data_f = []
     for item in total:
         sc = int(item['score'])
@@ -97,7 +97,7 @@ def tag_with_emo(total):
             item['Management'] = 0
 
         a = int(item['Non_1']) + int(item['Parking']) + int(item['Elevator'])+ int(item['MRT']) + int(item['Bus']) + int(item['Park'])+int(item['Convenience']) + int(item['Noise'])+ int(item['Police_station'])+int(item['Management'])
-        if a <2:
+        if a/int(sc) <2:
             pass
         else:
 
