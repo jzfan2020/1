@@ -1,8 +1,9 @@
 import pymysql
 import json
 from math import radians, cos, sin, asin, sqrt
+import mercantile
 
-db = pymysql.connect(host='localhost', user='root', password='1202tibame', charset='utf8mb4')
+db = pymysql.connect(host='35.189.186.41', user='root', password='1234', charset='utf8mb4')
 
 def haversine(lon1, lat1, lon2, lat2):
     """
@@ -37,7 +38,7 @@ def get_total(db_name):
 #對照資料集
 def data_set_collection(table_name):
     cursor = db.cursor()
-    cursor.execute('''select name, longtitude, latitude from project_lat_lng.{}'''.format(table_name))
+    cursor.execute('''select name, longtitude, latitude from distance_tag.{}'''.format(table_name))
     data = cursor.fetchall()
     return data
 # #計算距離:
@@ -52,11 +53,47 @@ def distance_cal(data1,data2, distance_required):
                 pass
     dis_set = set(dis_list)
     return dis_set
-#新增表格
-def new_table():
-    cursor = db.cursor()
-    addnew = """create table distance_tag.dis_tag_obj(ID char(20) NOT NULL, Police int NOT NULL, Market int NOT NULL, MRT int NOT NULL, Bus int NOT NULL, Park int NOT NULL, Temple int NOT NULL)"""
-    cursor.execute(addnew)
+#讀取重度土壤液化檔案
+def soil_hi():
+    with open('E:/project_use/geodata/soil_liq_hi.txt', 'r',encoding='utf-8') as f:
+        t = json.load(f)
+    '''把所有的物件只挑要的撈出來，另存成item'''
+    item1 = []
+    for iii, it in enumerate(t['features']):
+        area = it['properties']['area']
+        grade = it['properties']['分級']
+        codi = []
+        for jjj, it1 in enumerate(it['geometry']['coordinates']):
+            for kkk, it2 in enumerate(it1):
+                long = it2[0]
+                lat = it2[1]
+                codi.append((long,lat))
+        js = {'area': area,'grade': grade, 'coodinates': codi}
+        item1.append(js)
+    # print(item)
+    '''將經緯度轉換成quadkey值並存進原本的dict'''
+    for mmm, each in enumerate(item1):
+        each_tiles = []
+        for nnn, each_pt in enumerate(each['coodinates']):
+            zoom_num = 16
+            aaa = mercantile.tile(each_pt[0], each_pt[1], zoom_num)
+            each_tiles.append(aaa)
+    #     print(list(set(each_tiles)))
+        each_tile = list(set(each_tiles))
+        each_quad = []
+        for o in range(len(each_tile)):
+            b = mercantile.quadkey(each_tile[o])
+            each_quad.append(b)
+        each['quad']=each_quad
+    '''把最終高潛勢的quadkey值append成一個list'''
+    level_hi_quad = []
+    for ppp in range(len(item1)):
+        each_quads = item1[ppp]['quad']
+        for rrr in range(len(each_quads)):
+            ccc = each_quads[rrr]
+            level_hi_quad.append(ccc)
+    set(level_hi_quad)
+    return list(set(level_hi_quad))
 
 #判斷物件是否已存在資料庫裡
 def check_completed(target_name):
@@ -70,7 +107,6 @@ def check_completed(target_name):
     return  completed
 def main():
 
-    # new_table()
     cursor = db.cursor()
     data_complete = check_completed('distance_tag.dis_tag_obj')
     data_o1 = get_total('realestate')
@@ -80,8 +116,17 @@ def main():
             pass
         else:
             data_o.append(each)
+    # print(len(data_o))
 
-
+    # print(data_o)
+    soil_hi_level = soil_hi()
+    tag_soil = []
+    for aa, latlng in enumerate(data_o):
+        # print(latlng)
+        quad_o = mercantile.quadkey(mercantile.tile(latlng[3], latlng[4], 16))
+        js_o = {'id': latlng[0], 'quad_o':quad_o}
+        tag_soil.append(js_o)
+    # print(len(tag_soil))
     data_p = data_set_collection('latnlng_police')
     data_m = data_set_collection('latnlng_market')
     data_m1 = data_set_collection('latnlng_mrt')
@@ -97,12 +142,13 @@ def main():
     result_p =[]
     # result = []
     for z in range(len(data_o)):
-        tag_p = ''
-        tag_m = ''
-        tag_m1 = ''
-        tag_b = ''
-        tag_p1 = ''
-        tag_t = ''
+        # tag_p = ''
+        # tag_m = ''
+        # tag_m1 = ''
+        # tag_b = ''
+        # tag_p1 = ''
+        # tag_t = ''
+        # tag_s = ''
         id_p = data_o[z][0]
         if id_p in a:
             tag_p = 1
@@ -128,18 +174,23 @@ def main():
             tag_t = 1
         else:
             tag_t = 0
+        if id_p == tag_soil[z]['id'] and tag_soil[z]['quad_o'] in soil_hi_level:
+            tag_s = 1
+        else:
+            tag_s =0
 
         js_p = {'id': id_p,
-                'tags' : [{'Police' : tag_p, 'Market': tag_m,'MRT': tag_m1,"Bus": tag_b,'Park' : tag_p1, 'Temple': tag_t}]}
+                'tags' : [{'Police' : tag_p, 'Market': tag_m,'MRT': tag_m1,"Bus": tag_b,'Park' : tag_p1, 'Temple': tag_t, 'Soil_liq':tag_s}]}
 
         result_p.append(js_p)
     for item in result_p:
         # print(item)
         print('{} start'.format(item))
-        sql = """insert into distance_tag.dis_tag_obj (ID_obj, Police, Market, MRT, Bus, Park, Temple) values ('{}',{},{},{},{},{},{})""".format(item['id'], item['tags'][0]['Police'],item['tags'][0]['Market'],item['tags'][0]['MRT'],item['tags'][0]['Bus'],item['tags'][0]['Park'],item['tags'][0]['Temple'])
+        sql = """insert into distance_tag.dis_tag_obj (ID_obj, Police, Market, MRT, Bus, Park, Temple, Soil_liq) values ('{}',{},{},{},{},{},{}, {})""".format(item['id'], item['tags'][0]['Police'],item['tags'][0]['Market'],item['tags'][0]['MRT'],item['tags'][0]['Bus'],item['tags'][0]['Park'],item['tags'][0]['Temple'], item['tags'][0]['Soil_liq'])
+        # print(sql)
         cursor.execute(sql)
         db.commit()
-    # db.close()
+    db.close()
 
 if __name__ == '__main__':
     main()
